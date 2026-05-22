@@ -1,12 +1,12 @@
 use crate::cam::{
-    get_absolute_return_position, set_dist_offset_value, PLAYER_INDEX, PREVIOUS_CAMERA_MODE,
+    PLAYER_INDEX, PREVIOUS_CAMERA_MODE, get_absolute_return_position, set_dist_offset_value,
 };
 use eldenring::{cs::WorldChrMan, position::HavokPosition};
 use fromsoftware_shared::FromStatic;
 use std::sync::atomic::Ordering;
 
 pub fn _spectate_mode(player_count: usize) {
-    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance() }) else {
+    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance_mut() }) else {
         return;
     };
 
@@ -29,7 +29,7 @@ pub fn _spectate_mode(player_count: usize) {
     if target_player_index > 0 {
         let mut players = world_chr_man.player_chr_set.characters().enumerate();
         if let Some(player) = players.nth(target_player_index as usize) {
-            target_player_pos = Some(player.1.chr_ins.module_container.physics.position);
+            target_player_pos = Some(player.1.chr_ins.modules.physics.position);
         }
 
         //sanity check for default pos
@@ -42,7 +42,7 @@ pub fn _spectate_mode(player_count: usize) {
             if let Some(player_pos) = target_player_pos {
                 let new_position =
                     HavokPosition(player_pos.0, player_pos.1, player_pos.2, player_pos.3);
-                main_player.chr_ins.module_container.physics.position = new_position;
+                main_player.chr_ins.modules.physics.position = new_position;
             }
         }
     }

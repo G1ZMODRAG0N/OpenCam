@@ -8,7 +8,7 @@ pub fn lock_on_hud_props(
 ) {
     unsafe {
         //hud hide
-        if let Ok(fe_man) = CSFeManImp::instance() {
+        if let Ok(fe_man) = CSFeManImp::instance_mut() {
             if fe_man.hud_state != CSFeManHudState::HideAll {
                 fe_man.hud_state = CSFeManHudState::HideAll;
             }

@@ -1,13 +1,13 @@
 use std::sync::atomic::Ordering;
 
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 use crate::cam::{
-    get_dist_offset_value, now_ms, read_lock_value, set_dist_offset_value, write_lock_value,
     AUTO_ROTATE, AUTO_ROTATE_CURRENT_SPEED, AUTO_ROTATE_CW, AUTO_ROTATE_OFF,
     AUTO_TRANSITION_MAX_DIST, AUTO_TRANSITION_MIN_DIST, AUTO_TRANSITION_NEXT,
     AUTO_TRANSITION_ROT_SPEED, AUTO_TRANSITION_TIME_SECONDS, AUTO_TRANSITION_ZOOM_DIRECTION,
-    CAMERA_MODE, PLAYER_INDEX,
+    CAMERA_MODE, PLAYER_INDEX, get_dist_offset_value, now_ms, read_lock_value,
+    set_dist_offset_value, write_lock_value,
 };
 
 pub fn _auto_transition_mode(player_count: usize, camera_mode: i8) {

@@ -1,7 +1,7 @@
 use crate::cam::{
-    set_dist_offset_value, write_lock_value, AUTO_ROTATE, AUTO_ROTATE_CURRENT_SPEED,
-    AUTO_ROTATE_OFF, CAMERA_MODE, DIST_MIN, FOV, ORBIT_CORRECTION, ORBIT_CORRECTION_THRESHOLD,
-    PREVIOUS_CAMERA_MODE,
+    AUTO_ROTATE, AUTO_ROTATE_CURRENT_SPEED, AUTO_ROTATE_OFF, CAMERA_MODE, DIST_MIN, FOV,
+    ORBIT_CORRECTION, ORBIT_CORRECTION_THRESHOLD, PREVIOUS_CAMERA_MODE, set_dist_offset_value,
+    write_lock_value,
 };
 use eldenring::{
     cs::{PlayerIns, WorldChrMan},
@@ -11,7 +11,7 @@ use fromsoftware_shared::{F32Vector4, FromStatic};
 use std::sync::atomic::Ordering;
 
 pub fn _follow_mode(player_count: usize, field_area_va: u64, fade_to_color_va: u64) {
-    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance() }) else {
+    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance_mut() }) else {
         return;
     };
 
@@ -74,11 +74,14 @@ pub fn _follow_mode(player_count: usize, field_area_va: u64, fade_to_color_va: u
         let mut player_too_close = false;
         //get positional data for all players aside main
         for player_ins in player_sets {
-            let is_main_player = player_ins.player_game_data.is_main_player;
-            if is_main_player {
-                continue;
+            unsafe {
+                let is_main_player = player_ins.player_game_data.as_ref().is_main_player;
+
+                if is_main_player {
+                    continue;
+                }
             }
-            let pos = player_ins.chr_ins.module_container.physics.position;
+            let pos = player_ins.chr_ins.modules.physics.position;
             pos_x_total.push(pos.0);
             pos_y_total.push(pos.1);
             pos_z_total.push(pos.2);
@@ -124,7 +127,7 @@ pub fn _follow_mode(player_count: usize, field_area_va: u64, fade_to_color_va: u
 
         //set pos
         if let Some(ref mut main_player) = world_chr_man.main_player {
-            main_player.chr_ins.module_container.physics.position = follow_pos;
+            main_player.chr_ins.modules.physics.position = follow_pos;
         }
 
         //calculate square differences of positions for max dist

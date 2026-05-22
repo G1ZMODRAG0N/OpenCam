@@ -8,20 +8,17 @@ use std::{
 
 use eldenring::{
     cs::{
-        CSCamera, CSFeManHudState, CSFeManImp, CSSessionManager, CSTaskGroupIndex, CSTaskImp,
-        ChrType, LobbyState, MenuString, MultiplayRole, WorldChrMan,
+        CSCamExt, CSCamera, CSFeManHudState, CSFeManImp, CSSessionManager, CSTaskGroupIndex,
+        CSTaskImp, ChrType, LobbyState, MenuString, MultiplayRole, PlayerIns, WorldBlockInfo,
+        WorldChrMan,
     },
     fd4::FD4TaskData,
     position::HavokPosition,
     util::system::wait_for_system_init,
 };
 
-use fromsoftware_shared::{
-    F32Vector4, FromStatic,
-    program::{self, Program},
-    task::*,
-};
-use pelite::pe::Pe;
+use fromsoftware_shared::{F32Vector4, FromStatic, Program, SharedTaskImpExt};
+use pelite::{pattern, pe::Pe};
 use retour::static_detour;
 
 pub(crate) mod auto_transition;
@@ -41,10 +38,11 @@ use crate::{
         spectate::_spectate_mode,
         top_down::_top_down_mode,
     },
-    mod_config::TARGET_MAN_PTRN,
-    quick_respawn::LabelReplacementTemplate,
     rva,
 };
+
+pub const TARGET_MAN_PTRN: &[pelite::pattern::Atom] =
+    pattern!("48 8B 05 ? ? ? ? 0F B6 5B ? 48 85 C0");
 
 //inputs
 pub static CURRENT_INPUT: AtomicI32 = AtomicI32::new(0);
@@ -61,8 +59,8 @@ pub static FADE_STATE: AtomicI8 = AtomicI8::new(0);
 pub const FADE_DURATION_MS: u64 = 2000;
 
 //camera
-pub const CAMERA_ITEM_ID: i32 = 4600900;
-pub const CAMERA_MARKER_ITEM_ID: i32 = 4601000;
+pub const CAMERA_ITEM_ID: u32 = 4600900;
+pub const CAMERA_MARKER_ITEM_ID: u32 = 4601000;
 pub static CAMERA_ACTIVATION_ANIM: AtomicBool = AtomicBool::new(false);
 pub static CAMERA_ACTIVATION_TRIGGER: AtomicBool = AtomicBool::new(false);
 pub static CAMERA_STATE: AtomicI8 = AtomicI8::new(0);
@@ -121,6 +119,18 @@ pub static TARGET_LOCK_MODE: AtomicBool = AtomicBool::new(false);
 
 //collison
 pub static CAMERA_COLLISION: AtomicBool = AtomicBool::new(false);
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+pub enum LabelReplacementTemplate {
+    JoinName = 1,
+    HostName = 2,
+    DeadName = 3,
+    LeaveName = 4,
+    RoleName = 5,
+    Target = 6,
+}
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -204,7 +214,7 @@ pub fn start_dist_fade_logic(fade_to_color_va: u64) {
     };
     if let Ok(cs_cam) = unsafe { CSCamera::instance() } {
         if let Some(ref main_player) = world_chr_man.main_player {
-            let player_pos = main_player.chr_ins.module_container.physics.position;
+            let player_pos = main_player.chr_ins.modules.physics.position;
             let cam_pos = cs_cam.pers_cam_1.position();
 
             let distance_x = cam_pos.0 - player_pos.0;
@@ -236,25 +246,29 @@ pub fn start_camera_deactivation(
     is_rotation_locked: *mut u8,
     is_targeting_enabled: *mut u8,
 ) {
-    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance() }) else {
+    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance_mut() }) else {
+        return;
+    };
+
+    let Some(ref mut main_player) = world_chr_man.main_player else {
         return;
     };
     unsafe {
         //load state
-        if let Some(ref mut main_player) = world_chr_man.main_player {
-            let return_pos = get_absolute_return_position();
-            main_player.chr_ins.module_container.physics.position = return_pos;
-            main_player.chr_ins.debug_flags.set_force_unloaded(false);
-            main_player.chr_ins.chr_type = ChrType::Local;
-            main_player
-                .chr_ins
-                .module_container
-                .action_request
-                .disabled_action_inputs
-                .set_use_item(false);
-        }
+
+        let return_pos = get_absolute_return_position();
+        main_player.chr_ins.modules.physics.position = return_pos;
+        main_player.chr_ins.debug_flags.set_force_unloaded(false);
+        main_player.chr_ins.chr_type = ChrType::Local;
+        main_player
+            .chr_ins
+            .modules
+            .action_request
+            .disabled_action_inputs
+            .set_use_item(false);
+
         //hud restore
-        if let Ok(fe_man) = CSFeManImp::instance() {
+        if let Ok(fe_man) = CSFeManImp::instance_mut() {
             //log::info!("hud restore");
             if fe_man.hud_state == CSFeManHudState::HideAll {
                 fe_man.hud_state = CSFeManHudState::Default;
@@ -428,7 +442,7 @@ macro_rules! install_detour {
 }
 
 pub fn hook(program: &Program) -> Result<(), InitError> {
-    wait_for_system_init(Program, Duration::MAX).map_err(InitError::CsTaskImp)?;
+    wait_for_system_init(program, Duration::MAX).map_err(InitError::CsTaskImp)?;
 
     //scan for tgt lock man
     let mut scanner = program.scanner().matches_code(TARGET_MAN_PTRN);
@@ -526,9 +540,10 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
                 return result;
             };
 
-            let is_host = main_player.player_game_data.multiplay_role == MultiplayRole::Host;
+            let is_host =
+                main_player.player_game_data.as_ref().multiplay_role == MultiplayRole::Host;
             let is_overworld = main_player.current_block_id.area() >= 60;
-            let player_pos = main_player.chr_ins.module_container.physics.position;
+            let player_pos = main_player.chr_ins.modules.physics.position;
             let camera_state = CAMERA_STATE.load(Ordering::Relaxed);
             let camera_on_trigger = CAMERA_ACTIVATION_TRIGGER.load(Ordering::Relaxed);
             let custom_marker_on = CAMERA_MARKER.load(Ordering::Relaxed);
@@ -662,9 +677,13 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
 
     //get the item used as a trigger to start cam and mark center
     install_detour!(ITEM_USED, item_used_va, move |player_ins, item_id| {
-        let item_used = (&*player_ins).chr_ins.tae_queued_use_item.param_id();
-        let is_host = (&*player_ins).player_game_data.multiplay_role == MultiplayRole::Host;
-        let is_main_player = (&*player_ins).player_game_data.is_main_player;
+        let Some(item_used) = (&*player_ins).chr_ins.tae_queued_use_item.param_id() else {
+            ITEM_USED.call(player_ins, item_id);
+            return;
+        };
+        let is_host =
+            (&*player_ins).player_game_data.as_ref().multiplay_role == MultiplayRole::Host;
+        let is_main_player = (&*player_ins).player_game_data.as_ref().is_main_player;
         let is_overworld = (&*player_ins).current_block_id.area() >= 60;
         //activate camera
         if item_used == CAMERA_ITEM_ID {
@@ -677,7 +696,7 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
             let is_on = CAMERA_MARKER.load(Ordering::Relaxed);
             if is_host && is_main_player {
                 if !is_on {
-                    let player_pos = (&*player_ins).chr_ins.module_container.physics.position;
+                    let player_pos = (&*player_ins).chr_ins.modules.physics.position;
                     save_marker_position_relative(player_pos);
                     display_net_message(
                         show_net_notice_va,
@@ -694,7 +713,7 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
                 }
             }
             if !is_host {
-                log::info!("nothost");
+                // log::info!("nothost");
             }
         }
         ITEM_USED.call(player_ins, item_id);
@@ -991,7 +1010,7 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
     let cs_task = unsafe { CSTaskImp::instance().map_err(InitError::Program)? };
     cs_task.run_recurring(
         move |_: &FD4TaskData| {
-            let Ok(world_chr_man) = (unsafe { WorldChrMan::instance() }) else {
+            let Ok(world_chr_man) = (unsafe { WorldChrMan::instance_mut() }) else {
                 return;
             };
 
@@ -1004,7 +1023,7 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
             //set a flag for the item use animation and if it completed
             if let Some(ref main_player) = world_chr_man.main_player {
                 // let anim_active = CAMERA_ACTIVATION_ANIM.load(Ordering::Relaxed);
-                let anim_queue = &main_player.chr_ins.module_container.time_act.anim_queue;
+                let anim_queue = &main_player.chr_ins.modules.time_act.anim_queue;
                 let is_in_anim = anim_queue.iter().any(|a| a.anim_id == 50560);
                 if is_in_anim {
                     CAMERA_ACTIVATION_ANIM.store(true, Ordering::Relaxed);
@@ -1034,67 +1053,70 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
             //camera on trigger
             if camera_state == (CameraState::Off as i8) && camera_triggered && !in_activation_anim {
                 if let Some(ref mut main_player) = world_chr_man.main_player {
-                    let is_host = main_player.player_game_data.is_main_player;
-                    let players_in_world = player_count > 1;
+                    unsafe {
+                        let is_host = main_player.player_game_data.as_ref().is_main_player;
 
-                    let bypass = CAMERA_BYPASS.load(Ordering::Relaxed);
+                        let players_in_world = player_count > 1;
 
-                    //enable checks
-                    if !is_host && !bypass {
-                        display_net_message(
-                            show_net_notice_va,
-                            "Cannot start camera. You are not the host.",
-                        );
-                        CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
-                        return;
-                    } else if !players_in_world && !bypass {
-                        display_net_message(
-                            show_net_notice_va,
-                            "Cannot start camera. No players in world.",
-                        );
-                        CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
-                        return;
-                    } else if !is_lobby_ready && !bypass {
-                        display_net_message(
-                            show_net_notice_va,
-                            "Cannot start camera. Lobby is not ready.",
-                        );
-                        CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
-                        return;
-                    } else {
-                        // set unload state
-                        if !main_player.chr_ins.debug_flags.force_unloaded() {
-                            main_player.chr_ins.debug_flags.set_force_unloaded(true);
+                        let bypass = CAMERA_BYPASS.load(Ordering::Relaxed);
+
+                        //enable checks
+                        if !is_host && !bypass {
+                            display_net_message(
+                                show_net_notice_va,
+                                "Cannot start camera. You are not the host.",
+                            );
+                            CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
+                            return;
+                        } else if !players_in_world && !bypass {
+                            display_net_message(
+                                show_net_notice_va,
+                                "Cannot start camera. No players in world.",
+                            );
+                            CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
+                            return;
+                        } else if !is_lobby_ready && !bypass {
+                            display_net_message(
+                                show_net_notice_va,
+                                "Cannot start camera. Lobby is not ready.",
+                            );
+                            CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
+                            return;
+                        } else {
+                            // set unload state
+                            if !main_player.chr_ins.debug_flags.force_unloaded() {
+                                main_player.chr_ins.debug_flags.set_force_unloaded(true);
+                            }
+
+                            main_player.chr_ins.chr_type = ChrType::MessageGhost;
+                            let player_pos = main_player.chr_ins.modules.physics.position;
+
+                            //set cam defaults
+                            CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
+                            CAMERA_STATE.store(CameraState::On as i8, Ordering::Relaxed);
+                            PLAYER_INDEX.store(1, Ordering::Relaxed);
+                            AUTO_ROTATE.store(false, Ordering::Relaxed);
+                            AUTO_TRANSITION.store(false, Ordering::Relaxed);
+                            AUTO_TRANSITION_NEXT.store(0, Ordering::Relaxed);
+                            write_lock_value(&AUTO_ROTATE_CURRENT_SPEED, AUTO_ROTATE_OFF);
+                            set_dist_offset_value(DIST_MIN);
+                            write_lock_value(&FOV, 1.2);
+                            save_return_position_relative(player_pos);
+                            let custom_marker_on = CAMERA_MARKER.load(Ordering::Relaxed);
+                            let is_overworld = main_player.current_block_id.area() >= 60;
+                            if is_overworld && !custom_marker_on {
+                                save_marker_position_relative(player_pos);
+                                CAMERA_MARKER.store(true, Ordering::Relaxed);
+                            }
+                            main_player
+                                .chr_ins
+                                .modules
+                                .action_request
+                                .disabled_action_inputs
+                                .set_use_item(true);
                         }
-
-                        main_player.chr_ins.chr_type = ChrType::MessageGhost;
-                        let player_pos = main_player.chr_ins.module_container.physics.position;
-
-                        //set cam defaults
-                        CAMERA_ACTIVATION_TRIGGER.store(false, Ordering::Relaxed);
-                        CAMERA_STATE.store(CameraState::On as i8, Ordering::Relaxed);
-                        PLAYER_INDEX.store(1, Ordering::Relaxed);
-                        AUTO_ROTATE.store(false, Ordering::Relaxed);
-                        AUTO_TRANSITION.store(false, Ordering::Relaxed);
-                        AUTO_TRANSITION_NEXT.store(0, Ordering::Relaxed);
-                        write_lock_value(&AUTO_ROTATE_CURRENT_SPEED, AUTO_ROTATE_OFF);
-                        set_dist_offset_value(DIST_MIN);
-                        write_lock_value(&FOV, 1.2);
-                        save_return_position_relative(player_pos);
-                        let custom_marker_on = CAMERA_MARKER.load(Ordering::Relaxed);
-                        let is_overworld = main_player.current_block_id.area() >= 60;
-                        if is_overworld && !custom_marker_on {
-                            save_marker_position_relative(player_pos);
-                            CAMERA_MARKER.store(true, Ordering::Relaxed);
-                        }
-                        main_player
-                            .chr_ins
-                            .module_container
-                            .action_request
-                            .disabled_action_inputs
-                            .set_use_item(true);
                     }
-                }
+                };
             }
 
             //camera modes

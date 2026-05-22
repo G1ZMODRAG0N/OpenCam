@@ -1,20 +1,21 @@
 use crate::cam::{
-    get_absolute_marker_position, read_lock_value, set_dist_offset_value, CAMERA_MODE, DEFAULT_POS,
-    MARKER_POS_LOCAL, PREVIOUS_CAMERA_MODE, ZEROED_POSITION,
+    CAMERA_MODE, DEFAULT_POS, MARKER_POS_LOCAL, PREVIOUS_CAMERA_MODE, ZEROED_POSITION,
+    get_absolute_marker_position, read_lock_value, set_dist_offset_value,
 };
 use eldenring::cs::{MultiplayRole, WorldChrMan};
 use fromsoftware_shared::FromStatic;
 use std::sync::atomic::Ordering;
 
 pub fn _top_down_mode() {
-    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance() }) else {
+    let Ok(world_chr_man) = (unsafe { WorldChrMan::instance_mut() }) else {
         return;
     };
 
     let mut players = world_chr_man.player_chr_set.characters();
-    let invaders_present = players.any(|player_ins| {
-        player_ins.player_game_data.multiplay_role == MultiplayRole::RedInvasionA
-            || player_ins.player_game_data.multiplay_role == MultiplayRole::RedInvasionB
+
+    let invaders_present = players.any(|player_ins| unsafe {
+        player_ins.player_game_data.as_ref().multiplay_role == MultiplayRole::RedInvasionA
+            || player_ins.player_game_data.as_ref().multiplay_role == MultiplayRole::RedInvasionB
     });
 
     //skip top-down if its an invader lobby
@@ -37,10 +38,9 @@ pub fn _top_down_mode() {
         if let Some(ref mut main_player) = world_chr_man.main_player {
             //apply custom marker if enabled and not zeroed
             if is_custom_off {
-                main_player.chr_ins.module_container.physics.position =
-                    read_lock_value(&DEFAULT_POS);
+                main_player.chr_ins.modules.physics.position = read_lock_value(&DEFAULT_POS);
             } else {
-                main_player.chr_ins.module_container.physics.position = custom_marker;
+                main_player.chr_ins.modules.physics.position = custom_marker;
             }
         };
     }

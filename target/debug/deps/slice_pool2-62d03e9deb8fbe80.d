@@ -1,0 +1,9 @@
+E:\Modding\third-party-sources\OpenCam\target\debug\deps\slice_pool2-62d03e9deb8fbe80.d: C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\lib.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\sync\mod.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\sync\owned.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\unsync\mod.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\unsync\owned.rs
+
+E:\Modding\third-party-sources\OpenCam\target\debug\deps\libslice_pool2-62d03e9deb8fbe80.rmeta: C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\lib.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\sync\mod.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\sync\owned.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\unsync\mod.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\unsync\owned.rs
+
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\lib.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\sync\mod.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\sync\owned.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\unsync\mod.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\slice-pool2-0.4.3\src\unsync\owned.rs:
