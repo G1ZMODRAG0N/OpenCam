@@ -578,20 +578,28 @@ pub fn hook(program: &Program) -> Result<(), InitError> {
                     }
                     0x75 => {
                         if !camera_on_trigger && camera_state == CameraState::Off as i8 {
-                            if !custom_marker_on {
+                            if is_overworld {
                                 save_marker_position_relative(player_pos);
                                 display_net_message(
                                     show_net_notice_va,
                                     "New camera center position has been set",
                                 );
                                 CAMERA_MARKER.store(true, Ordering::Relaxed);
-                            } else if custom_marker_on && !is_overworld {
+                            } else if !is_overworld && !custom_marker_on {
+                                save_marker_position_relative(player_pos);
+                                display_net_message(
+                                    show_net_notice_va,
+                                    "New camera center position has been set",
+                                );
+                                CAMERA_MARKER.store(true, Ordering::Relaxed);
+                            }
+                            if custom_marker_on && !is_overworld {
                                 write_lock_value(&MARKER_POS_LOCAL, ZEROED_POSITION);
                                 display_net_message(
                                     show_net_notice_va,
                                     "Camera center position has been reset",
                                 );
-                                CAMERA_MARKER.store(true, Ordering::Relaxed);
+                                CAMERA_MARKER.store(false, Ordering::Relaxed);
                             }
                         }
                     }

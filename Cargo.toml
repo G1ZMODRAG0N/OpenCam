@@ -13,6 +13,9 @@ codegen-units = 1
 panic = "abort"
 opt-level = "z"
 
+[profile.dev]
+panic = "abort"
+
 [dependencies]
 eldenring = { git = "https://github.com/vswarte/fromsoftware-rs", version = "0.13.0" }
 fromsoftware-shared = { version = "0.13.0", git = "https://github.com/vswarte/fromsoftware-rs" }
