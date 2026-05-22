@@ -1,0 +1,10 @@
+E:\Modding\third-party-sources\OpenCam\target\debug\deps\dataview-41a1996ba1e6b5fb.d: C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\lib.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\data_view.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\derive_pod.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\field_offsets.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\offset_of.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\embed.rs
+
+E:\Modding\third-party-sources\OpenCam\target\debug\deps\libdataview-41a1996ba1e6b5fb.rmeta: C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\lib.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\data_view.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\derive_pod.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\field_offsets.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\offset_of.rs C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\embed.rs
+
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\lib.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\data_view.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\derive_pod.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\field_offsets.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\offset_of.rs:
+C:\Users\G1ZMO_DRAG0N\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dataview-1.0.2\src\embed.rs:
